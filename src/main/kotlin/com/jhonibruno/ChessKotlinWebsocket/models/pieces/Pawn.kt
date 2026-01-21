@@ -1,0 +1,37 @@
+package com.jhonibruno.ChessKotlinWebsocket.models.pieces
+
+import com.jhonibruno.ChessKotlinWebsocket.models.Move
+import com.jhonibruno.ChessKotlinWebsocket.models.board.Slot
+import com.jhonibruno.ChessKotlinWebsocket.models.enums.PieceColor
+import com.jhonibruno.ChessKotlinWebsocket.models.enums.PieceType
+
+class Pawn(color: PieceColor): Piece(color) {
+    override val moveDirections = listOf<MoveVectorDTO>(
+        MoveVectorDTO(1,0), MoveVectorDTO(2,0),
+        MoveVectorDTO(1,1), MoveVectorDTO(1,-1))
+
+    override val pieceType = PieceType.PAWN
+    val isMoved = false
+
+    override fun getPossibleMoves(initialSlot: Slot, board: MutableList<MutableList<Slot>>): List<Move> {
+        val possibleMoves = mutableListOf<Move>()
+        for (direction in moveDirections) {
+            val checkRow = initialSlot.row + direction.row
+            val checkColumn = initialSlot.column + direction.column
+            if (checkRow !in 0..7 || checkColumn !in 0..7) continue
+            if (isMoved && direction.row == 2) continue
+            val destinationSlot = board[checkRow][checkColumn]
+            val targetPiece = destinationSlot.piece
+            val isCapture = targetPiece != null
+            if (isCapture && checkColorMatches(targetPiece.color)) continue
+            if (isCapture && direction.row == 0) continue
+            if (!isCapture && direction.column != 0) continue
+            possibleMoves.add(Move(initialSlot,destinationSlot,isCapture))
+        }
+        return possibleMoves
+    }
+
+    override fun toString(): String {
+        return if (color == PieceColor.WHITE) "♙" else "♟"
+    }
+}
