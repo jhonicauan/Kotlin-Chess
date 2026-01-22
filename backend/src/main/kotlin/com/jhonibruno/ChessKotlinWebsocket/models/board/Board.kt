@@ -47,8 +47,6 @@ class Board {
 
 
     fun showBoard() {
-        slots[2][1].piece = Rook(PieceColor.BLACK)
-        print(slots[1][0].piece?.getPossibleMoves(slots[1][0],slots))
         for (i in 7 downTo 0) {
             for (j in 0..7) {
                 print(slots[i][j].piece ?: '.')

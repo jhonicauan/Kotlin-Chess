@@ -18,13 +18,16 @@ class Pawn(color: PieceColor): Piece(color) {
         for (direction in moveDirections) {
             val checkRow = initialSlot.row + direction.row
             val checkColumn = initialSlot.column + direction.column
+
             if (checkRow !in 0..7 || checkColumn !in 0..7) continue
             if (isMoved && direction.row == 2) continue
+
             val destinationSlot = board[checkRow][checkColumn]
             val targetPiece = destinationSlot.piece
             val isCapture = targetPiece != null
+
             if (isCapture && checkColorMatches(targetPiece.color)) continue
-            if (isCapture && direction.row == 0) continue
+            if (isCapture && direction.column == 0) continue
             if (!isCapture && direction.column != 0) continue
             possibleMoves.add(Move(initialSlot,destinationSlot,isCapture))
         }
