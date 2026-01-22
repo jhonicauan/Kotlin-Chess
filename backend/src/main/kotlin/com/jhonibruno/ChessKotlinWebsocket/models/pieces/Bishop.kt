@@ -7,31 +7,13 @@ import com.jhonibruno.ChessKotlinWebsocket.models.enums.PieceType
 
 class Bishop(color: PieceColor) : Piece(color) {
     override val pieceType = PieceType.BISHOP
+    override fun clone(): Piece {
+        return Bishop(color)
+    }
+
     override val moveDirections = listOf<MoveVectorDTO>(
         MoveVectorDTO(1,1), MoveVectorDTO(1,-1),
         MoveVectorDTO(-1,1), MoveVectorDTO(-1,-1))
-
-    override fun getPossibleMoves(initialSlot: Slot, board: MutableList<MutableList<Slot>>): List<Move> {
-        val possibleMoves = mutableListOf<Move>()
-        for (direction in moveDirections) {
-            var checkRow = initialSlot.row
-            var checkColumn = initialSlot.column
-            while (true) {
-                checkRow += direction.row
-                checkColumn += direction.column
-                if (checkRow !in 0..7 || checkColumn !in 0..7) break
-                val destinationSlot = board[checkRow][checkColumn]
-                val targetPiece = destinationSlot.piece
-                val isCapture = targetPiece != null
-
-                if (isCapture && checkColorMatches(targetPiece.color)) break
-                possibleMoves.add(Move(initialSlot,destinationSlot,isCapture))
-
-                if (isCapture) break
-            }
-        }
-        return possibleMoves
-    }
 
     override fun toString(): String {
         return if (color == PieceColor.WHITE) "♗" else "♝"

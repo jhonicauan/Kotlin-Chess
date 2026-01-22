@@ -8,8 +8,8 @@ import com.jhonibruno.ChessKotlinWebsocket.models.enums.PieceType
 abstract class Piece(val color: PieceColor) {
     abstract val moveDirections: List<MoveVectorDTO>
     abstract val pieceType: PieceType
-    abstract fun getPossibleMoves(initialSlot: Slot, board: MutableList<MutableList<Slot>>): List<Move>
     fun checkColorMatches(color: PieceColor): Boolean {
         return color == this.color
     }
+    abstract fun clone(): Piece
 }

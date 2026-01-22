@@ -13,21 +13,8 @@ class King(color: PieceColor): Piece(color) {
         MoveVectorDTO(-1,1), MoveVectorDTO(-1, -1))
 
     override val pieceType = PieceType.KING
-
-    override fun getPossibleMoves(initialSlot: Slot, board: MutableList<MutableList<Slot>>): List<Move> {
-        val possibleMoves = mutableListOf<Move>()
-        for (direction in moveDirections) {
-            val checkRow = initialSlot.row + direction.row
-            val checkColumn = initialSlot.column + direction.column
-            if (checkRow !in 0..7 || checkColumn !in 0..7) continue
-            val destinationSlot = board[checkRow][checkColumn]
-            val targetPiece = destinationSlot.piece
-            val isCapture = targetPiece != null
-            if (isCapture && checkColorMatches(targetPiece.color)) continue
-            if (isCapture && direction.row == 0) continue
-            possibleMoves.add(Move(initialSlot,destinationSlot,isCapture))
-        }
-        return possibleMoves
+    override fun clone(): Piece {
+        return King(color)
     }
 
     override fun toString(): String {
