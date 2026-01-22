@@ -58,22 +58,11 @@ class Board(private val slots: MutableList<MutableList<Slot>>) {
     }
 
     private fun getKingSlot(color: PieceColor): Slot {
-        for (row in slots) {
-            for (slot in row) {
-                if (slot.piece?.pieceType == PieceType.KING && slot.piece?.color == color) return slot
-            }
-        }
-        throw IllegalArgumentException("Cor invalida")
+        return slots.flatten().first { it.piece?.color == color && it.piece?.pieceType == PieceType.KING }
     }
 
     private fun getSlotsByColor(color: PieceColor): List<Slot> {
-        val slotsByColor = mutableListOf<Slot>()
-        for (row in slots) {
-            for (slot in row) {
-                if (slot.piece?.color == color) slotsByColor.add(slot)
-            }
-        }
-        return slotsByColor
+        return slots.flatten().filter { it.piece?.color == color }
     }
 
     fun movePiece(move: Move) {
@@ -118,9 +107,7 @@ class Board(private val slots: MutableList<MutableList<Slot>>) {
         val pieces = getSlotsByColor(color)
         for (piece in pieces) {
             val possibleMoves = getLegalMoves(piece)
-            for (move in possibleMoves) {
-                validMoves.add(move)
-            }
+            validMoves.addAll(possibleMoves)
         }
         return !validMoves.isEmpty()
     }
