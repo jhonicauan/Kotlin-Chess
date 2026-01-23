@@ -58,6 +58,10 @@ class Board {
         return slots[row][col]
     }
 
+    fun getSlots(): MutableList<MutableList<Slot>> {
+        return slots
+    }
+
     private fun getKingSlot(color: PieceColor): Slot {
         return slots.flatten().first { it.piece?.color == color && it.piece?.pieceType == PieceType.KING }
     }
@@ -70,8 +74,15 @@ class Board {
         val pieceSlot = move.pieceSlot
         val destinationSlot = move.destinationSlot
         slots[destinationSlot.row][destinationSlot.column].piece = slots[pieceSlot.row][pieceSlot.column].piece
+        val piece = slots[destinationSlot.row][destinationSlot.column].piece
+        if(piece?.pieceType == PieceType.PAWN) (piece as Pawn).isMoved = true
+        if(piece?.pieceType == PieceType.KING) (piece as King).canCastling = false
+        if(piece?.pieceType == PieceType.ROOK) (piece as Rook).canCastling = false
         slots[pieceSlot.row][pieceSlot.column].piece = null
     }
+
+
+
 
     private fun reverseMove(move: Move) {
         val pieceSlot = move.pieceSlot
@@ -95,10 +106,10 @@ class Board {
         val pieceType = piece.pieceType
 
         return when (pieceType) {
-            PieceType.KING -> KingValidator.getPossibleMoves(pieceSlot, slots)
-            PieceType.KNIGHT -> KnightValidator.getPossibleMoves(pieceSlot, slots)
-            PieceType.PAWN -> PawnValidator.getPossibleMoves(pieceSlot, slots)
-            else -> GenericValidator.getPossibleMoves(pieceSlot, slots)
+            PieceType.KING -> KingValidator.getPossibleMoves(pieceSlot, this)
+            PieceType.KNIGHT -> KnightValidator.getPossibleMoves(pieceSlot, this)
+            PieceType.PAWN -> PawnValidator.getPossibleMoves(pieceSlot, this)
+            else -> GenericValidator.getPossibleMoves(pieceSlot, this)
         }
     }
 
@@ -141,13 +152,15 @@ class Board {
     }
 
     fun getAlternativePiece(move: Move): List<Slot> {
+        val pieceSlot = move.pieceSlot
+        val destinationSlot = move.destinationSlot
+        val isCapture = move.isCapture
         return slots.flatten()
-            .filter {
-                it.piece?.color == move.pieceSlot.piece?.color
-                        && it.piece?.pieceType == move.pieceSlot.piece?.pieceType
-                        && it.piece != move.pieceSlot.piece
-                        && getLegalMoves(it).contains(Move(it, move.destinationSlot, move.isCapture))
-            }
+            .filter { it != pieceSlot
+                    && it.piece?.color == pieceSlot.piece?.color
+                    && it.piece?.pieceType == pieceSlot.piece?.pieceType
+                    && (it.row == pieceSlot.row || it.column == pieceSlot.column)
+                    && getLegalMoves(it).contains(Move(it,destinationSlot,isCapture))}
     }
 
     init {
