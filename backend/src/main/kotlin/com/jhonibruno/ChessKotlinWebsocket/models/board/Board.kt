@@ -9,7 +9,8 @@ import com.jhonibruno.ChessKotlinWebsocket.models.validators.KingValidator
 import com.jhonibruno.ChessKotlinWebsocket.models.validators.KnightValidator
 import com.jhonibruno.ChessKotlinWebsocket.models.validators.PawnValidator
 
-class Board(private val slots: MutableList<MutableList<Slot>>) {
+class Board {
+    private val slots: MutableList<MutableList<Slot>> = mutableListOf()
     private val columns: List<Char> = listOf('a','b','c','d','e','f','g','h')
 
     private fun generateBoard() {
@@ -137,6 +138,16 @@ class Board(private val slots: MutableList<MutableList<Slot>>) {
             }
             println("")
         }
+    }
+
+    fun getAlternativePiece(move: Move): List<Slot> {
+        return slots.flatten()
+            .filter {
+                it.piece?.color == move.pieceSlot.piece?.color
+                        && it.piece?.pieceType == move.pieceSlot.piece?.pieceType
+                        && it.piece != move.pieceSlot.piece
+                        && getLegalMoves(it).contains(Move(it, move.destinationSlot, move.isCapture))
+            }
     }
 
     init {

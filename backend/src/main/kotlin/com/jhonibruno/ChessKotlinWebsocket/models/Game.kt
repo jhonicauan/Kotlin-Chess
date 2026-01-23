@@ -3,6 +3,7 @@ package com.jhonibruno.ChessKotlinWebsocket.models
 import com.jhonibruno.ChessKotlinWebsocket.models.board.Board
 import com.jhonibruno.ChessKotlinWebsocket.models.enums.GameStatus
 import com.jhonibruno.ChessKotlinWebsocket.models.enums.PieceColor
+import com.jhonibruno.ChessKotlinWebsocket.models.notation.MoveNotation
 
 class Game(private val board: Board) {
 
@@ -43,12 +44,12 @@ class Game(private val board: Board) {
         return possibleMoves.contains(move)
     }
 
-    fun isGameRunning(): Boolean {
+    fun isRunning(): Boolean {
         return status == GameStatus.RUNNING
     }
 
     fun makeMove(piecePosition: String, destinationPosition: String) {
-        if (!isGameRunning()) throw IllegalStateException("O jogo já terminou")
+        if (!isRunning()) throw IllegalStateException("O jogo já terminou")
 
         val pieceSlot = board.getSlotByPosition(piecePosition)
         val piece = pieceSlot.piece
@@ -59,10 +60,18 @@ class Game(private val board: Board) {
         val move = Move(pieceSlot, destinationSlot, isCapture)
         val possibleMoves = board.getLegalMoves(pieceSlot)
         if (existsPossibleMove(move, possibleMoves)) {
+            val moveClone = move.clone()
+            val alternativePiece = board.getAlternativePiece(move)
             board.movePiece(move)
-            if (isCheck())  println("O rei esta em xeque")
-            board.showBoard()
+
             changePlayerColor()
+
+            if (isCheck())  println("O rei esta em xeque")
+
+            val moveNotation = MoveNotation(moveClone, alternativePiece, isCheck(), isCheckmate(), false, false, null)
+            println(moveNotation.notation)
+
+            board.showBoard()
             updateStatus()
         }
     }
