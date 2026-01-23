@@ -6,8 +6,8 @@ import com.jhonibruno.ChessKotlinWebsocket.models.enums.PieceType
 import com.jhonibruno.ChessKotlinWebsocket.models.pieces.Piece
 
 class MoveNotation(
-    private val move: Move,
-    private val alternativePiece: List<Slot>,
+    private val move: Move?,
+    private val alternativePieces: List<Slot>,
     private val isCheck: Boolean,
     private val isCheckmate: Boolean,
     private val isCastlingKing: Boolean,
@@ -17,11 +17,9 @@ class MoveNotation(
     val notation: String
 
     fun generateNotation(): String {
-        if (isCastlingKing) return "O-O"
-        if (isCastlingQueen) return "O-O-O"
-
         val notationBuilder = StringBuilder()
-
+        appendCastlingKing(notationBuilder)
+        appendCastlingQueen(notationBuilder)
         appendPiece(notationBuilder)
         appendIsCapture(notationBuilder)
         appendPosition(notationBuilder)
@@ -30,6 +28,14 @@ class MoveNotation(
         appendIsCheckmate(notationBuilder)
 
         return notationBuilder.toString()
+    }
+
+    private fun appendCastlingKing(notationBuilder: StringBuilder) {
+        if (isCastlingKing) notationBuilder.append("O-O")
+    }
+
+    private fun appendCastlingQueen(notationBuilder: StringBuilder) {
+        if (isCastlingQueen) notationBuilder.append("O-O-O")
     }
 
     private fun appendIsCheckmate(notationBuilder: StringBuilder) {
@@ -46,7 +52,7 @@ class MoveNotation(
 
     private fun appendPosition(notationBuilder: StringBuilder) {
         val columns = listOf('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
-
+        if (move == null) return
         move.destinationSlot.let {
             notationBuilder
                 .append(columns[it.column])
@@ -55,12 +61,27 @@ class MoveNotation(
     }
 
     private fun appendIsCapture(notationBuilder: StringBuilder) {
+        if (move == null) return
         if (move.isCapture) notationBuilder.append('x')
     }
 
     private fun appendPiece(notationBuilder: StringBuilder) {
+        if (move == null) return
         val piece: Piece? = move.pieceSlot.piece
         if (piece?.pieceType != PieceType.PAWN) notationBuilder.append(piece?.pieceType?.letter)
+        val columns = listOf('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
+        var isColumnRepeated = false
+        var isRowRepeated = false
+        for (slot in alternativePieces) {
+            if (slot.row == move.pieceSlot.row) isRowRepeated = true
+            if (slot.column == move.pieceSlot.column) isColumnRepeated = true
+        }
+        if (isColumnRepeated) notationBuilder.append(move.pieceSlot.row + 1)
+        if (isRowRepeated || (piece?.pieceType == PieceType.PAWN && move.isCapture)) notationBuilder.append(columns[move.pieceSlot.column])
+    }
+
+    override fun toString(): String {
+        return notation
     }
 
     init {
