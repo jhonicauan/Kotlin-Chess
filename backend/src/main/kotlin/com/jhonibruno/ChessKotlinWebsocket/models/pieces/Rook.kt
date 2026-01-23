@@ -10,7 +10,7 @@ class Rook(color: PieceColor) : Piece(color) {
     override fun clone(): Piece {
         return Rook(color)
     }
-
+    var canCastling = true
     override val moveDirections = listOf<MoveVectorDTO>(
         MoveVectorDTO(1,0), MoveVectorDTO(0, 1),
         MoveVectorDTO(-1, 0), MoveVectorDTO(0, -1)
