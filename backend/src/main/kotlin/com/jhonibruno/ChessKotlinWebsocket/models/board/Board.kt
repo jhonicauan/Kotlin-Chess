@@ -89,13 +89,16 @@ class Board(private val slots: MutableList<MutableList<Slot>>) {
         return valid
     }
 
-    private fun getPossibleMoves(pieceSlot: Slot): MutableList<Move> {
-        val piece = pieceSlot.piece ?: return mutableListOf()
+    private fun getPossibleMoves(pieceSlot: Slot): List<Move> {
+        val piece = pieceSlot.piece ?: return listOf()
         val pieceType = piece.pieceType
-        if (pieceType == PieceType.KING) return KingValidator.getPossibleMoves(pieceSlot,slots)
-        if (pieceType == PieceType.KNIGHT) return KnightValidator.getPossibleMoves(pieceSlot,slots)
-        if (pieceType == PieceType.PAWN) return PawnValidator.getPossibleMoves(pieceSlot,slots)
-        return GenericValidator.getPossibleMoves(pieceSlot,slots)
+
+        return when (pieceType) {
+            PieceType.KING -> KingValidator.getPossibleMoves(pieceSlot, slots)
+            PieceType.KNIGHT -> KnightValidator.getPossibleMoves(pieceSlot, slots)
+            PieceType.PAWN -> PawnValidator.getPossibleMoves(pieceSlot, slots)
+            else -> GenericValidator.getPossibleMoves(pieceSlot, slots)
+        }
     }
 
     fun getLegalMoves(pieceSlot: Slot): List<Move> {

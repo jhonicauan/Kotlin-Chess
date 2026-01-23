@@ -5,7 +5,7 @@ import com.jhonibruno.ChessKotlinWebsocket.models.board.Slot
 
 class GenericValidator {
     companion object {
-        fun getPossibleMoves(pieceSlot: Slot, boardSlots: List<List<Slot>>): MutableList<Move> {
+        fun getPossibleMoves(pieceSlot: Slot, boardSlots: List<List<Slot>>): List<Move> {
             val possibleMoves = mutableListOf<Move>()
             val piece = pieceSlot.piece ?: return possibleMoves
 

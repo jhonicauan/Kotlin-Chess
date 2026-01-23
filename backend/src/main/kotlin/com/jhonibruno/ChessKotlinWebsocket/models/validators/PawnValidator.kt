@@ -7,7 +7,7 @@ import com.jhonibruno.ChessKotlinWebsocket.models.pieces.Pawn
 
 class PawnValidator {
     companion object {
-        fun getPossibleMoves(pieceSlot: Slot, boardSlots: List<List<Slot>>): MutableList<Move> {
+        fun getPossibleMoves(pieceSlot: Slot, boardSlots: List<List<Slot>>): List<Move> {
             val possibleMoves = mutableListOf<Move>()
             val pawn = pieceSlot.piece as? Pawn ?: return possibleMoves
             val moveDirections = pawn.moveDirections
