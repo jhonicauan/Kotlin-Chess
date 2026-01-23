@@ -13,14 +13,14 @@ class Board(private val slots: MutableList<MutableList<Slot>>) {
     private val columns: List<Char> = listOf('a','b','c','d','e','f','g','h')
 
     private fun generateBoard() {
-        if (slots.isEmpty()) {
-            for (i in 0..7) {
-                val row = mutableListOf<Slot>()
-                for (j in 0..7) {
-                    row.add(Slot(i, j, null))
-                }
-                slots.add(row)
+        if (!slots.isEmpty()) return
+
+        for (i in 0..7) {
+            val row = mutableListOf<Slot>()
+            for (j in 0..7) {
+                row.add(Slot(i, j, null))
             }
+            slots.add(row)
         }
     }
 
@@ -79,7 +79,7 @@ class Board(private val slots: MutableList<MutableList<Slot>>) {
         slots[pieceSlot.row][pieceSlot.column].piece = pieceSlot.piece
     }
 
-    private fun isMoveValid(move: Move): Boolean {
+    private fun isMoveLegal(move: Move): Boolean {
         val piece = move.pieceSlot.piece ?: return false
         val actualColor = piece.color
         val backupMove = move.clone()
@@ -102,14 +102,14 @@ class Board(private val slots: MutableList<MutableList<Slot>>) {
     }
 
     fun getLegalMoves(pieceSlot: Slot): List<Move> {
-        return getPossibleMoves(pieceSlot).filter { isMoveValid(it) }
+        return getPossibleMoves(pieceSlot).filter { isMoveLegal(it) }
     }
 
     fun existsSafeMoves(color: PieceColor): Boolean {
         val validMoves = mutableListOf<Move>()
-        val pieces = getSlotsByColor(color)
-        for (piece in pieces) {
-            val possibleMoves = getLegalMoves(piece)
+        val slotsByColor = getSlotsByColor(color)
+        for (slot in slotsByColor) {
+            val possibleMoves = getLegalMoves(slot)
             validMoves.addAll(possibleMoves)
         }
         return !validMoves.isEmpty()
@@ -143,5 +143,4 @@ class Board(private val slots: MutableList<MutableList<Slot>>) {
         generateBoard()
         setPieces()
     }
-
 }
