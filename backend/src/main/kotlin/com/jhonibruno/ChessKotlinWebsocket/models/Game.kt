@@ -1,10 +1,8 @@
 package com.jhonibruno.ChessKotlinWebsocket.models
 
 import com.jhonibruno.ChessKotlinWebsocket.models.board.Board
-import com.jhonibruno.ChessKotlinWebsocket.models.board.Slot
 import com.jhonibruno.ChessKotlinWebsocket.models.enums.GameStatus
 import com.jhonibruno.ChessKotlinWebsocket.models.enums.PieceColor
-import com.jhonibruno.ChessKotlinWebsocket.models.pieces.Piece
 
 class Game(private val board: Board) {
 
