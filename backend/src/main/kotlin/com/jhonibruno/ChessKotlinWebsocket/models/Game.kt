@@ -6,6 +6,7 @@ import com.jhonibruno.ChessKotlinWebsocket.models.client.GameDTO
 import com.jhonibruno.ChessKotlinWebsocket.models.client.GameStatusDTO
 import com.jhonibruno.ChessKotlinWebsocket.models.enums.GameStatus
 import com.jhonibruno.ChessKotlinWebsocket.models.enums.PieceColor
+import com.jhonibruno.ChessKotlinWebsocket.models.enums.PieceType
 import com.jhonibruno.ChessKotlinWebsocket.models.history.MoveLogRegistry
 import com.jhonibruno.ChessKotlinWebsocket.models.notation.MoveNotation
 
@@ -74,26 +75,65 @@ class Game(private val board: Board) {
         else moveLog.last().round + 1
     }
 
-    fun makeMove(piecePosition: String, destinationPosition: String) {
-        if (!isRunning()) throw IllegalStateException("O jogo já terminou")
+    private fun isMoveKingSideCastling(move: Move): Boolean {
+        val slots = board.getSlots()
+        val colorRow = if (currentPlayerColor == PieceColor.WHITE) 0 else 7
+        return move.pieceSlot.piece?.pieceType == PieceType.KING && move.pieceSlot == slots[colorRow][4] && move.destinationSlot == slots[colorRow][6]
+    }
 
+    private fun isMoveQueenSideCastling(move: Move): Boolean {
+        val slots = board.getSlots()
+        val colorRow = if (currentPlayerColor == PieceColor.WHITE) 0 else 7
+        return move.pieceSlot.piece?.pieceType == PieceType.KING && move.pieceSlot == slots[colorRow][4] && move.destinationSlot == slots[colorRow][2]
+    }
+
+    fun makeMove(moveDTO: ClientMoveDTO) {
+        if (!isRunning()) throw IllegalStateException("O jogo já terminou")
+        val piecePosition = moveDTO.position
         val pieceSlot = board.getSlotByPosition(piecePosition)
         val piece = pieceSlot.piece
-        if (piece == null || piece.color != currentPlayerColor) throw IllegalArgumentException("Só é possível mover peças de sua cor")
 
+        if (piece == null || piece.color != currentPlayerColor) throw IllegalArgumentException("Só é possível mover peças de sua cor")
+        val destinationPosition = moveDTO.destiny
         val destinationSlot = board.getSlotByPosition(destinationPosition)
+
         val isCapture = destinationSlot.piece != null
         val move = Move(pieceSlot, destinationSlot, isCapture)
         val possibleMoves = board.getLegalMoves(pieceSlot)
 
         if (existsPossibleMove(move, possibleMoves)) {
             val moveClone = move.clone()
+            if (isMoveKingSideCastling(move)) {
+                board.kingSideCastling(currentPlayerColor)
+                val roundBoard = board.getSlots().flatten().map { it.clone() }
+                changePlayerColor()
+                verifyCheck()
+                val moveNotation = MoveNotation(moveClone, listOf(), isCheck, isCheckmate(), true, false, moveDTO.promotion)
+                moveLog.add(MoveLogRegistry(getRound(),moveNotation,roundBoard))
+                updateStatus()
+                return
+            }
+            if (isMoveQueenSideCastling(move)) {
+                board.queenSideCastling(currentPlayerColor)
+                val roundBoard = board.getSlots().flatten().map { it.clone() }
+                changePlayerColor()
+                verifyCheck()
+                val moveNotation = MoveNotation(moveClone, listOf(), isCheck, isCheckmate(), false, true, moveDTO.promotion)
+                moveLog.add(MoveLogRegistry(getRound(),moveNotation,roundBoard))
+                updateStatus()
+                return
+            }
             val alternativePiece = board.getAlternativePiece(move)
+            if (!board.canPromote(destinationSlot,piece) && moveDTO.promotion != null) throw IllegalArgumentException("Não é possivel promover")
+            if (board.canPromote(destinationSlot,piece) && moveDTO.promotion == null) throw IllegalArgumentException("Não se pode mover um peão para ultima casa sem especificar a promoção")
             board.movePiece(move)
+            val roundBoard = board.getSlots().flatten().map { it.clone() }
+            if (board.canPromote(destinationSlot,piece) && moveDTO.promotion != null) board.promotePawn(destinationSlot,moveDTO.promotion)
             changePlayerColor()
             verifyCheck()
-            val moveNotation = MoveNotation(moveClone, alternativePiece, isCheck, isCheckmate(), false, false, null)
-            moveLog.add(MoveLogRegistry(getRound(),moveNotation))
+
+            val moveNotation = MoveNotation(moveClone, alternativePiece, isCheck, isCheckmate(), false, false, moveDTO.promotion)
+            moveLog.add(MoveLogRegistry(getRound(),moveNotation,roundBoard))
             updateStatus()
         }
     }
