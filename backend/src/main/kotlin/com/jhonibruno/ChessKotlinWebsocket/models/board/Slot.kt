@@ -10,11 +10,15 @@ data class Slot(val row: Int, val column: Int, var piece: Piece?) {
     }
 
     fun toDto(): ClientBoardDTO {
+        val piece = piece?.let { ChessPieceDTO(it.color, it.pieceType) }
+        return ClientBoardDTO(toPosition(), piece)
+    }
+
+    fun toPosition(): String {
         val columns = listOf('a','b','c','d','e','f','g','h')
         val position: StringBuilder = StringBuilder("")
         position.append(columns[column])
         position.append(row+1)
-        val piece = piece?.let { ChessPieceDTO(it.color, it.pieceType) }
-        return ClientBoardDTO(position.toString(), piece)
+        return position.toString()
     }
 }
