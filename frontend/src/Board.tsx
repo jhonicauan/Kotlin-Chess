@@ -19,7 +19,7 @@ import whiteRook from "./assets/whiteRook.svg"
 import whiteBishop from "./assets/whiteBishop.svg"
 import whiteKnight from "./assets/whiteKnight.svg"
 import whitePawn from "./assets/whitePawn.svg"
-import { type MoveLog,type Status, type Game,  type Slot, type GameStatus,type PieceColor } from "./types/ChessTypes"
+import { type MoveLog,type Status, type Game,  type Slot, type GameStatus,type PieceColor, type Round } from "./types/ChessTypes"
 
 function Board() {
 
@@ -28,10 +28,12 @@ function Board() {
 
 
     const [board, setBoard] = useState<Slot[]>([])
+    const [selectedBoard, setSelectedBoard] = useState<Slot[]>([])
     const [moveLog, setMoveLog] = useState<MoveLog[]>([])
     const [status, setStatus] = useState<Status>("RUNNING")
     const [isCheck,setIsCheck] = useState<Boolean>(false)
     const [currentColor,setCurrentColor] = useState<PieceColor>("WHITE")
+    const [room,setRoom] = useState("Sala1")
     const columns = ["a", "b", "c", "d", "e", "f", "g", "h"]
     const rows = [8,7,6,5,4,3,2,1]
     const [legalMoves,setLegalMoves] = useState<Slot[]>([])
@@ -65,23 +67,24 @@ function Board() {
 
         client.onConnect = (frame: IFrame) => {
             console.log("STOMP conectado")
-
-            client.subscribe("/topic/game", response => {
+            client.subscribe("/topic/game/"+room, response => {
                 const game: Game = JSON.parse(response.body)
                 const gameStatus: GameStatus = game.status
                 setBoard(game.board)
+                setSelectedBoard(game.board)
                 setStatus(gameStatus.status)
                 setCurrentColor(gameStatus.actualColor)
                 setIsCheck(gameStatus.isCheck)
                 setMoveLog(game.moveLog)
             })
 
-            client.subscribe("/user/queue/check", response => {
+            client.subscribe("/user/queue/check/"+room, response => {
                 setLegalMoves(JSON.parse(response.body))
             })
 
+            client.publish({destination:"/app/game/create",body:room})
             client.publish({
-                destination: "/app/game/joined",
+                destination: "/app/game/joined/"+room,
                 body: ""
             })
         }
@@ -95,7 +98,7 @@ function Board() {
     }, [])
 
     function setPieceImage(position: string) {
-        const slot = board.find(slot => slot.position === position)
+        const slot = selectedBoard.find(slot => slot.position === position)
         if (!slot || !slot.piece) return null
 
         const piece = slot.piece
@@ -108,17 +111,29 @@ function Board() {
         }
 
     function setSlotColor(row: number, column: number) {
-        if(board.length == 0) return
+        if(selectedBoard.length == 0) return
         const position = columns[column]+rows[row]
-        const slot = board.find((slot)=>slot.position === position)
+        const slot = selectedBoard.find((slot)=>slot.position === position)
         if (slot == null) throw new Error("Slot não existe")
         if (slot.piece == null)  {
             if (isSlotALegalMove(position)) return "square blue"
+            if(moveLog.length != 0) {
+            const log = moveLog.find((log) => log.roundBoard == selectedBoard) ?? moveLog[moveLog.length - 1]
+            const piecePosition = log.piecePosition
+            const destinyPosition = log.destinyPosition
+            if (piecePosition == position || destinyPosition == position) return "square yellow"
+        }
             return (row + column) % 2 == 0 ? "square white" : "square black"
         } 
         if (slot.piece.color == currentColor && slot.piece.pieceType == "KING" && isCheck) return "square red"
         if (isSlotALegalMove(position) && slot.piece.color == currentColor) return "square blue"
         else if (isSlotALegalMove(position)) return "square green"
+        if(moveLog.length != 0) {
+            const log = moveLog.find((log) => log.roundBoard == selectedBoard) ?? moveLog[moveLog.length - 1]
+            const piecePosition = log.piecePosition
+            const destinyPosition = log.destinyPosition
+            if (piecePosition == position || destinyPosition == position) return "square yellow"
+        }
         return (row + column) % 2 == 0 ? "square white" : "square black"
     }
     
@@ -137,29 +152,78 @@ function Board() {
        return legalMoves.some(slot => slot.position === position)
     }
 
+    function slotIsCurrentColor(position: String) {
+        const slot = board.find(slot => slot.position == position)
+        return slot?.piece == null || slot?.piece?.color == currentColor 
+    }
+
     function selectSlot(position: string) {
+        if (selectedBoard === board) {
         const client = clientRef.current
         if (!client || !client.connected) {
             console.warn("STOMP não conectado")
             return
         }
         if(!isSlotALegalMove(position)){
+        if(!slotIsCurrentColor(position)) return
         setSelectedPosition(position)
         client.publish({
-            destination: "/app/game/checkMoves",
+            destination: "/app/game/checkMoves/"+room,
             body: position
         })
     }else{
+        if(!isMovePromotion()) {
         client.publish({
-            destination: "/app/game/makeMove",
+            destination: "/app/game/makeMove/"+room,
             body: JSON.stringify({
                 "position": selectedPosition,
-                "destiny": position
+                "destiny": position,
+                "promotion": null
             })
         })
+    } else {
+        const promotion = prompt("Digite a peça desejada")
+        client.publish({
+            destination: "/app/game/makeMove/"+room,
+            body: JSON.stringify({
+                "position": selectedPosition,
+                "destiny": position,
+                "promotion": promotion
+            })
+        })
+    }
         setLegalMoves([])
         setSelectedPosition("")
     }
+}
+    }
+
+    function groupByRound() {
+        const rounds: Round[] = []
+        moveLog.forEach((move,index) => {
+            if (index % 2 == 0) {
+                rounds.push({round: move.round,white: move, black: null})
+            }else {
+                const round = rounds[rounds.length - 1]
+                round.black = move
+            }
+        })
+        return rounds
+    }
+
+    function isMovePromotion() {
+        const promotionRow = currentColor == "WHITE" ? "7" : "2"
+        const selectedSlot = board.find((slot)=> slot.position === selectedPosition)
+        if(selectedSlot == null) throw new Error("Slot não existe")
+        return promotionRow == selectedSlot.position[1] && selectedSlot.piece?.pieceType == "PAWN"
+    }
+
+    function selectBoard(selectBoard: Slot[]) {
+        if(selectBoard == moveLog[moveLog.length -1].roundBoard) {
+            setSelectedBoard(board)
+        }else{
+            setSelectedBoard(selectBoard)
+        }
     }
 
     return (
@@ -187,10 +251,13 @@ function Board() {
        <table className="log">
         <tr>
             <th>Rodada</th>
-            <th>Movimento</th>
+            <th>Movimento Brancas</th>
+            <th>Movimento Pretas</th>
         </tr>
-        {moveLog.map((moveLog)=>(
-            <tr><th>{moveLog.round}</th><th>{moveLog.notation}</th></tr>
+        {groupByRound().map((round)=>(
+            <tr><th>{round.round}</th>
+            <th onClick={()=>selectBoard(round.white.roundBoard)}>{round.white.notation}</th>
+            <th onClick={()=>round.black && selectBoard(round.black.roundBoard)}>{round.black == null ? "" : round.black.notation}</th></tr>
         ))}
         </table>
         </>
