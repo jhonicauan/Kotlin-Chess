@@ -23,6 +23,10 @@
     background-color: greenyellow;
 }
 
+.yellow {
+    background-color: gold;
+}
+
 .log, .log th, .log td {
   border: 1px solid black;
   border-collapse: collapse;
