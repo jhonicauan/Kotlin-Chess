@@ -27,7 +27,8 @@ class KingValidator {
                 if (isCapture && targetPiece.checkColorMatches(king.color)) continue
                 possibleMoves.add(Move(pieceSlot, destinationSlot, isCapture))
                 }
-
+            //if (board.canKingSideCastling(king.color)) possibleMoves.add(Move(pieceSlot,slots[pieceSlot.row][6],false))
+            //if (board.canQueenSideCastling(king.color)) possibleMoves.add(Move(pieceSlot,slots[pieceSlot.row][2],false))
             return possibleMoves
         }
     }
