@@ -8,6 +8,12 @@ export interface Slot {
     piece: Piece | null
 }
 
+export interface Round {
+    round: number,
+    white: MoveLog,
+    black: MoveLog | null
+}
+
 export interface GameStatus {
     status: Status,
     actualColor: PieceColor,
@@ -22,7 +28,10 @@ export interface Game {
 
 export interface MoveLog {
     round: number,
-    notation: String
+    notation: String,
+    roundBoard: Slot[],
+    piecePosition: String,
+    destinyPosition: String
 }
 
 export type Status = "RUNNING" | "BLACK_WINS" | "WHITE_WINS" | "STALEMATE"
