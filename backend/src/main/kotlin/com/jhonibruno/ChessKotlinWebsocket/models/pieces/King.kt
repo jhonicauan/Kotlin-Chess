@@ -5,13 +5,12 @@ import com.jhonibruno.ChessKotlinWebsocket.models.board.Slot
 import com.jhonibruno.ChessKotlinWebsocket.models.enums.PieceColor
 import com.jhonibruno.ChessKotlinWebsocket.models.enums.PieceType
 
-class King(color: PieceColor): Piece(color) {
+class King(color: PieceColor, var isMoved: Boolean = false): Piece(color) {
     override val moveDirections = listOf<MoveVectorDTO>(
         MoveVectorDTO(1,0), MoveVectorDTO(-1,0),
         MoveVectorDTO(0,1), MoveVectorDTO(0,-1),
         MoveVectorDTO(1,1), MoveVectorDTO(1, -1),
         MoveVectorDTO(-1,1), MoveVectorDTO(-1, -1))
-    var canCastling = true
     override val pieceType = PieceType.KING
     override fun clone(): Piece {
         return King(color)
