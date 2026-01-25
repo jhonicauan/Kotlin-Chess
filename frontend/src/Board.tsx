@@ -21,7 +21,7 @@ import whiteKnight from "./assets/whiteKnight.svg"
 import whitePawn from "./assets/whitePawn.svg"
 import { type MoveLog,type Status, type Game,  type Slot, type GameStatus,type PieceColor, type Round } from "./types/ChessTypes"
 
-function Board() {
+export default function Board() {
 
 
     const clientRef = useRef<Client | null>(null)
@@ -31,7 +31,9 @@ function Board() {
     const [selectedBoard, setSelectedBoard] = useState<Slot[]>([])
     const [moveLog, setMoveLog] = useState<MoveLog[]>([])
     const [status, setStatus] = useState<Status>("RUNNING")
-    const [isCheck,setIsCheck] = useState<Boolean>(false)
+    const [isCheck,setIsCheck] = useState<boolean>(false)
+    const [isPromotion,setIsPromotion] = useState<boolean>(false)
+    const [destiny,setDestiny] = useState("")
     const [currentColor,setCurrentColor] = useState<PieceColor>("WHITE")
     const [room,setRoom] = useState("Sala1")
     const columns = ["a", "b", "c", "d", "e", "f", "g", "h"]
@@ -173,6 +175,7 @@ function Board() {
         })
     }else{
         if(!isMovePromotion()) {
+        setIsPromotion(false)
         client.publish({
             destination: "/app/game/makeMove/"+room,
             body: JSON.stringify({
@@ -182,15 +185,9 @@ function Board() {
             })
         })
     } else {
-        const promotion = prompt("Digite a peça desejada")
-        client.publish({
-            destination: "/app/game/makeMove/"+room,
-            body: JSON.stringify({
-                "position": selectedPosition,
-                "destiny": position,
-                "promotion": promotion
-            })
-        })
+        setIsPromotion(true)
+        setDestiny(position)
+        return
     }
         setLegalMoves([])
         setSelectedPosition("")
@@ -198,6 +195,35 @@ function Board() {
 }
     }
 
+    function promote(promotion: String) {
+        const client = clientRef.current
+        if (!client || !client.connected) {
+            console.warn("STOMP não conectado")
+            return
+        }
+        console.log("Oi")
+        client.publish({
+            destination: "/app/game/makeMove/"+room,
+            body: JSON.stringify({
+                "position": selectedPosition,
+                "destiny": destiny,
+                "promotion": promotion
+            })
+        })
+        setLegalMoves([])
+        setSelectedPosition("")
+        setIsPromotion(false)
+    }
+
+    function promoteOptions() {
+       if(isPromotion) return  <>
+        <button onClick={()=>promote("QUEEN")}><img src={pieceImages[currentColor]["QUEEN"]} alt="" /></button>
+        <button onClick={()=>promote("BISHOP")}><img src={pieceImages[currentColor]["BISHOP"]} alt="" /></button>
+        <button onClick={()=>promote("KNIGHT")}><img src={pieceImages[currentColor]["KNIGHT"]} alt="" /></button>
+        <button onClick={()=>promote("ROOK")}><img src={pieceImages[currentColor]["ROOK"]} alt="" /></button>
+        </>
+        else return
+    }
     function groupByRound() {
         const rounds: Round[] = []
         moveLog.forEach((move,index) => {
@@ -248,6 +274,7 @@ function Board() {
         </tbody>
        </table>
        {showStatus()}
+       {promoteOptions()}
        <table className="log">
         <tr>
             <th>Rodada</th>
@@ -263,5 +290,3 @@ function Board() {
         </>
     )
 }
-
-export default Board

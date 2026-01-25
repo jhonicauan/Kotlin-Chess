@@ -10,7 +10,7 @@ class Pawn(color: PieceColor, var isMoved: Boolean = false): Piece(color) {
         MoveVectorDTO(1,0), MoveVectorDTO(2,0),
         MoveVectorDTO(1,1), MoveVectorDTO(1,-1))
 
-    override val pieceType = PieceType.PAWN
+    override val type = PieceType.PAWN
 
     override fun clone(): Piece {
         return Pawn(color, isMoved)

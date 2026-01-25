@@ -10,8 +10,24 @@ import com.jhonibruno.ChessKotlinWebsocket.models.validators.KnightValidator
 import com.jhonibruno.ChessKotlinWebsocket.models.validators.PawnValidator
 
 class Board {
+
+    private companion object {
+        const val WHITE_KINGS_ROW = 0
+        const val BLACK_KINGS_ROW = 7
+
+        const val QUEEN_SIDE_ROOK_COLUMN = 0
+        const val QUEEN_SIDE_KNIGHT_COLUMN = 1
+        const val QUEEN_SIDE_BISHOP_COLUMN = 2
+        const val QUEEN_COLUMN = 3
+        const val KING_COLUMN = 4
+        const val KING_SIDE_BISHOP_COLUMN = 5
+        const val KING_SIDE_KNIGHT_COLUMN = 6
+        const val KING_SIDE_ROOK_COLUMN = 7
+    }
+
     private val slots: MutableList<MutableList<Slot>> = mutableListOf()
     private val columns: List<Char> = listOf('a','b','c','d','e','f','g','h')
+
     private fun generateBoard() {
         if (!slots.isEmpty()) return
 
@@ -24,31 +40,30 @@ class Board {
         }
     }
 
-    private fun setPieces() {
-        val white = PieceColor.WHITE
-        val black = PieceColor.BLACK
-        slots[0][0].piece = Rook(white)
-        slots[0][1].piece = Knight(white)
-        slots[0][2].piece = Bishop(white)
-        slots[0][3].piece = Queen(white)
-        slots[0][4].piece = King(white)
-        slots[0][5].piece = Bishop(white)
-        slots[0][6].piece = Knight(white)
-        slots[0][7].piece = Rook(white)
+    private fun initPiecePositions() {
+        setPiecesInitialPositionsByColor(PieceColor.WHITE)
+        setPiecesInitialPositionsByColor(PieceColor.BLACK)
+    }
 
-        slots[7][0].piece = Rook(black)
-        slots[7][1].piece = Knight(black)
-        slots[7][2].piece = Bishop(black)
-        slots[7][3].piece = Queen(black)
-        slots[7][4].piece = King(black)
-        slots[7][5].piece = Bishop(black)
-        slots[7][6].piece = Knight(black)
-        slots[7][7].piece = Rook(black)
+    private fun setPiecesInitialPositionsByColor(color: PieceColor) {
+        val kingsRow = getKingsRowByColor(color)
+        kingsRow[QUEEN_SIDE_ROOK_COLUMN].piece = Rook(color)
+        kingsRow[QUEEN_SIDE_KNIGHT_COLUMN].piece = Knight(color)
+        kingsRow[QUEEN_SIDE_BISHOP_COLUMN].piece = Bishop(color)
+        kingsRow[QUEEN_COLUMN].piece = Queen(color)
+        kingsRow[KING_COLUMN].piece = King(color)
+        kingsRow[KING_SIDE_BISHOP_COLUMN].piece = Bishop(color)
+        kingsRow[KING_SIDE_KNIGHT_COLUMN].piece = Knight(color)
+        kingsRow[KING_SIDE_ROOK_COLUMN].piece = Rook(color)
 
+        val colorsPawnRow = if (color == PieceColor.WHITE) slots[WHITE_KINGS_ROW + 1] else slots[BLACK_KINGS_ROW - 1]
         for (i in 0..7) {
-            slots[1][i].piece = Pawn(white)
-            slots[6][i].piece = Pawn(black)
+            colorsPawnRow[i].piece = Pawn(color)
         }
+    }
+
+    fun getKingsRowByColor(color: PieceColor): MutableList<Slot> {
+        return if (color == PieceColor.WHITE) slots[WHITE_KINGS_ROW] else slots[BLACK_KINGS_ROW]
     }
 
      fun getSlotByPosition(position: String): Slot {
@@ -62,7 +77,7 @@ class Board {
     }
 
     private fun getKingSlot(color: PieceColor): Slot {
-        return slots.flatten().first { it.piece?.color == color && it.piece?.pieceType == PieceType.KING }
+        return slots.flatten().first { it.piece?.color == color && it.piece?.type == PieceType.KING }
     }
 
     private fun getSlotsByColor(color: PieceColor): List<Slot> {
@@ -75,25 +90,30 @@ class Board {
         slots[destinationSlot.row][destinationSlot.column].piece = slots[pieceSlot.row][pieceSlot.column].piece
         val piece = slots[destinationSlot.row][destinationSlot.column].piece ?: return
 
-        if(piece?.pieceType == PieceType.PAWN) (piece as Pawn).isMoved = true
-        if(piece?.pieceType == PieceType.KING) (piece as King).isMoved = true
-        if(piece?.pieceType == PieceType.ROOK) (piece as Rook).isMoved = true
+        when (piece.type) {
+            PieceType.PAWN -> (piece as Pawn).isMoved = true
+            PieceType.KING -> (piece as King).isMoved = true
+            PieceType.ROOK -> (piece as Rook).isMoved = true
+            else -> {}
+        }
+
         slots[pieceSlot.row][pieceSlot.column].piece = null
     }
 
      fun canPromote(destination: Slot,piece: Piece): Boolean {
-        val promotionRow = if(piece.color == PieceColor.WHITE)  7 else 0
-        return piece.pieceType == PieceType.PAWN && promotionRow == destination.row
+        val promotionRow = if(piece.color == PieceColor.WHITE) BLACK_KINGS_ROW else WHITE_KINGS_ROW
+        return piece.type == PieceType.PAWN && promotionRow == destination.row
     }
 
     fun promotePawn(destination: Slot, type: PieceType){
         if(destination.piece == null) throw IllegalArgumentException("Não se pode promover casas nulas")
         val color = destination.piece?.color ?: throw IllegalArgumentException("Cor invalida")
-        when(type){
-            PieceType.KNIGHT -> destination.piece = Knight(color)
-            PieceType.BISHOP -> destination.piece = Bishop(color)
-            PieceType.ROOK -> destination.piece = Rook(color)
-            PieceType.QUEEN -> destination.piece = Queen(color)
+
+        destination.piece = when(type) {
+            PieceType.KNIGHT -> Knight(color)
+            PieceType.BISHOP -> Bishop(color)
+            PieceType.ROOK -> Rook(color)
+            PieceType.QUEEN -> Queen(color)
             else -> throw IllegalArgumentException("PROMOÇÃO INVALIDA")
         }
     }
@@ -117,7 +137,7 @@ class Board {
 
     private fun getPossibleMoves(pieceSlot: Slot): List<Move> {
         val piece = pieceSlot.piece ?: return listOf()
-        val pieceType = piece.pieceType
+        val pieceType = piece.type
 
         return when (pieceType) {
             PieceType.KING -> KingValidator.getPossibleMoves(pieceSlot, this)
@@ -128,7 +148,18 @@ class Board {
     }
 
     fun getLegalMoves(pieceSlot: Slot): List<Move> {
-        return getPossibleMoves(pieceSlot).filter { isMoveLegal(it) }
+        val legalMoves = getPossibleMoves(pieceSlot).filter { isMoveLegal(it) }.toMutableList()
+        val piece = pieceSlot.piece
+        if (piece?.type == PieceType.KING) {
+            if (canKingSideCastling(piece.color)) {
+                legalMoves.add(Move(pieceSlot, slots[pieceSlot.row][KING_SIDE_KNIGHT_COLUMN], false))
+            }
+            if (canQueenSideCastling(piece.color)) {
+                legalMoves.add(Move(pieceSlot, slots[pieceSlot.row][QUEEN_SIDE_KNIGHT_COLUMN], false))
+            }
+        }
+
+        return legalMoves
     }
 
     fun existsSafeMoves(color: PieceColor): Boolean {
@@ -169,36 +200,28 @@ class Board {
         val destinationSlot = move.destinationSlot
         val isCapture = move.isCapture
         return slots.flatten()
-            .filter { it != pieceSlot
-                    && it.piece?.color == pieceSlot.piece?.color
-                    && it.piece?.pieceType == pieceSlot.piece?.pieceType
-                    && (it.row == pieceSlot.row || it.column == pieceSlot.column)
-                    && getLegalMoves(it).contains(Move(it,destinationSlot,isCapture))}
+            .filter {
+                it != pieceSlot
+                        && it.piece?.color == pieceSlot.piece?.color
+                        && it.piece?.type == pieceSlot.piece?.type
+                        && (it.row == pieceSlot.row || it.column == pieceSlot.column)
+                        && getLegalMoves(it).contains(Move(it,destinationSlot,isCapture))
+            }
     }
 
     private fun kingSideIsSafe(color: PieceColor): Boolean {
-        if (color == PieceColor.WHITE) return verifySlotIsSafe(color,slots[0][5]) && verifySlotIsSafe(color,slots[0][6])
-        return verifySlotIsSafe(color,slots[7][5]) && verifySlotIsSafe(color,slots[7][6])
+        val kingsRow = getKingsRowByColor(color)
+        return verifySlotIsSafe(color, kingsRow[KING_SIDE_BISHOP_COLUMN]) && verifySlotIsSafe(color, kingsRow[KING_SIDE_KNIGHT_COLUMN])
     }
 
     private fun kingSideIsFree(color: PieceColor): Boolean {
-        if (color == PieceColor.WHITE) return slots[0][5].piece == null && slots[0][6].piece == null
-        return slots[7][5].piece == null && slots[7][6].piece == null
+        val kingsRow = getKingsRowByColor(color)
+        return kingsRow[KING_SIDE_BISHOP_COLUMN].piece == null && kingsRow[KING_SIDE_KNIGHT_COLUMN].piece == null
     }
 
     private fun kingSideStillInThePlace(color: PieceColor): Boolean {
-        if (color == PieceColor.WHITE) {
-            if (slots[0][4].piece == null || slots[0][7].piece == null) return false
-            if (slots[0][4].piece?.pieceType != PieceType.KING || slots[0][7].piece?.pieceType != PieceType.ROOK) return false
-            val king = slots[0][4].piece as King
-            val rook = slots[0][7].piece as Rook
-            return !king.isMoved && !rook.isMoved
-        }
-        if (slots[7][4].piece == null || slots[7][7].piece == null) return false
-        if (slots[7][4].piece?.pieceType != PieceType.KING || slots[7][7].piece?.pieceType != PieceType.ROOK) return false
-        val king = slots[7][4].piece as King
-        val rook = slots[7][7].piece as Rook
-        return !king.isMoved && !rook.isMoved
+        val pieceInRooksInitialSlot = getKingsRowByColor(color)[KING_SIDE_ROOK_COLUMN].piece
+        return kingAndRookStillInPlace(pieceInRooksInitialSlot)
     }
 
     fun canKingSideCastling(color: PieceColor): Boolean {
@@ -206,36 +229,46 @@ class Board {
     }
 
     fun kingSideCastling(color: PieceColor) {
-        val colorRow = if (color == PieceColor.WHITE) 0 else 7
-        slots[colorRow][4].piece = null
-        slots[colorRow][7].piece = null
-        slots[colorRow][6].piece = King(color,true)
-        slots[colorRow][5].piece = Rook(color,true)
+        val kingsRow = getKingsRowByColor(color)
+
+        val king = kingsRow[KING_COLUMN].piece
+        kingsRow[KING_SIDE_KNIGHT_COLUMN].piece = king
+        kingsRow[KING_COLUMN].piece = null
+        (king as King).isMoved = true
+
+        val rook = kingsRow[KING_SIDE_ROOK_COLUMN].piece
+        kingsRow[KING_SIDE_BISHOP_COLUMN].piece = rook
+        kingsRow[KING_SIDE_ROOK_COLUMN].piece = null
+        (rook as Rook).isMoved = true
     }
 
     private fun queenSideIsSafe(color: PieceColor): Boolean {
-        if (color == PieceColor.WHITE) return verifySlotIsSafe(color,slots[0][3]) && verifySlotIsSafe(color,slots[0][2])
-        return verifySlotIsSafe(color,slots[7][3]) && verifySlotIsSafe(color,slots[7][2])
+        val kingsRow = getKingsRowByColor(color)
+        return verifySlotIsSafe(color, kingsRow[QUEEN_COLUMN]) && verifySlotIsSafe(color, kingsRow[QUEEN_SIDE_BISHOP_COLUMN])
     }
 
     private fun queenSideIsFree(color: PieceColor): Boolean {
-        if (color == PieceColor.WHITE) return slots[0][3].piece == null && slots[0][2].piece == null && slots[0][1].piece == null
-        return slots[7][3].piece == null && slots[7][2].piece == null && slots[7][1].piece == null
+        val kingsRow = getKingsRowByColor(color)
+        return kingsRow[QUEEN_COLUMN].piece == null && kingsRow[QUEEN_SIDE_BISHOP_COLUMN].piece == null && kingsRow[QUEEN_SIDE_KNIGHT_COLUMN].piece == null
     }
 
     private fun queenSideStillInThePlace(color: PieceColor): Boolean {
-        if (color == PieceColor.WHITE) {
-            if (slots[0][4].piece == null || slots[0][0].piece == null) return false
-            if (slots[0][4].piece?.pieceType != PieceType.KING || slots[0][0].piece?.pieceType != PieceType.ROOK) return false
-            val king = slots[0][4].piece as King
-            val rook = slots[0][0].piece as Rook
-            return !king.isMoved && !rook.isMoved
-        }
-        if (slots[7][4].piece == null || slots[7][0].piece == null) return false
-        if (slots[7][4].piece?.pieceType != PieceType.KING && slots[7][0].piece?.pieceType != PieceType.ROOK) return false
-        val king = slots[7][4].piece as King
-        val rook = slots[7][0].piece as Rook
-        return !king.isMoved && !rook.isMoved
+        val pieceInRooksInitialSlot = getKingsRowByColor(color)[QUEEN_SIDE_ROOK_COLUMN].piece
+        return kingAndRookStillInPlace(pieceInRooksInitialSlot)
+    }
+
+    private fun kingAndRookStillInPlace(pieceInRooksInitialSlot: Piece?): Boolean {
+        if (pieceInRooksInitialSlot == null) return false
+        if (pieceInRooksInitialSlot.type != PieceType.ROOK) return false
+
+        val color = pieceInRooksInitialSlot.color
+        val pieceInKingsInitialSlot = getKingsRowByColor(color)[KING_COLUMN].piece ?: return false
+
+        if (pieceInKingsInitialSlot.type != PieceType.KING) return false
+
+        val narrowedKing = pieceInKingsInitialSlot as King
+        val narrowedRook = pieceInRooksInitialSlot as Rook
+        return !narrowedKing.isMoved && !narrowedRook.isMoved
     }
 
     fun canQueenSideCastling(color: PieceColor): Boolean {
@@ -243,15 +276,21 @@ class Board {
     }
 
     fun queenSideCastling(color: PieceColor) {
-        val colorRow = if (color == PieceColor.WHITE) 0 else 7
-        slots[colorRow][4].piece = null
-        slots[colorRow][0].piece = null
-        slots[colorRow][2].piece = King(color,true)
-        slots[colorRow][3].piece = Rook(color,true)
+        val kingsRow = getKingsRowByColor(color)
+
+        val king = kingsRow[KING_COLUMN].piece
+        kingsRow[QUEEN_SIDE_KNIGHT_COLUMN].piece = king
+        kingsRow[KING_COLUMN].piece = null
+        (king as King).isMoved = true
+
+        val rook = kingsRow[QUEEN_SIDE_ROOK_COLUMN].piece
+        kingsRow[QUEEN_COLUMN].piece = rook
+        kingsRow[QUEEN_SIDE_ROOK_COLUMN].piece = null
+        (rook as Rook).isMoved = true
     }
 
     init {
         generateBoard()
-        setPieces()
+        initPiecePositions()
     }
 }

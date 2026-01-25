@@ -78,13 +78,13 @@ class Game(private val board: Board) {
     private fun isMoveKingSideCastling(move: Move): Boolean {
         val slots = board.getSlots()
         val colorRow = if (currentPlayerColor == PieceColor.WHITE) 0 else 7
-        return move.pieceSlot.piece?.pieceType == PieceType.KING && move.pieceSlot == slots[colorRow][4] && move.destinationSlot == slots[colorRow][6]
+        return move.pieceSlot.piece?.type == PieceType.KING && move.pieceSlot == slots[colorRow][4] && move.destinationSlot == slots[colorRow][6]
     }
 
     private fun isMoveQueenSideCastling(move: Move): Boolean {
         val slots = board.getSlots()
         val colorRow = if (currentPlayerColor == PieceColor.WHITE) 0 else 7
-        return move.pieceSlot.piece?.pieceType == PieceType.KING && move.pieceSlot == slots[colorRow][4] && move.destinationSlot == slots[colorRow][2]
+        return move.pieceSlot.piece?.type == PieceType.KING && move.pieceSlot == slots[colorRow][4] && move.destinationSlot == slots[colorRow][2]
     }
 
     fun makeMove(moveDTO: ClientMoveDTO) {

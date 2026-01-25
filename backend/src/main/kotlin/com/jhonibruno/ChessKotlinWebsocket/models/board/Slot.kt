@@ -10,7 +10,7 @@ data class Slot(val row: Int, val column: Int, var piece: Piece?) {
     }
 
     fun toDto(): ClientBoardDTO {
-        val piece = piece?.let { ChessPieceDTO(it.color, it.pieceType) }
+        val piece = piece?.let { ChessPieceDTO(it.color, it.type) }
         return ClientBoardDTO(toPosition(), piece)
     }
 

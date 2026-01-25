@@ -6,7 +6,7 @@ import com.jhonibruno.ChessKotlinWebsocket.models.enums.PieceColor
 import com.jhonibruno.ChessKotlinWebsocket.models.enums.PieceType
 
 class Queen(color: PieceColor) : Piece(color) {
-    override val pieceType = PieceType.QUEEN
+    override val type = PieceType.QUEEN
     override fun clone(): Piece {
         return Queen(color)
     }

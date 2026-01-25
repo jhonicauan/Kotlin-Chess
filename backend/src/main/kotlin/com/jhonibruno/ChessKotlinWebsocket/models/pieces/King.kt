@@ -11,7 +11,7 @@ class King(color: PieceColor, var isMoved: Boolean = false): Piece(color) {
         MoveVectorDTO(0,1), MoveVectorDTO(0,-1),
         MoveVectorDTO(1,1), MoveVectorDTO(1, -1),
         MoveVectorDTO(-1,1), MoveVectorDTO(-1, -1))
-    override val pieceType = PieceType.KING
+    override val type = PieceType.KING
     override fun clone(): Piece {
         return King(color)
     }

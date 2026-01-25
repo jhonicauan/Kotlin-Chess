@@ -67,7 +67,7 @@ class MoveNotation(
 
     private fun appendPiece(notationBuilder: StringBuilder) {
         val piece: Piece? = move.pieceSlot.piece
-        if (piece?.pieceType != PieceType.PAWN) notationBuilder.append(piece?.pieceType?.letter)
+        if (piece?.type != PieceType.PAWN) notationBuilder.append(piece?.type?.letter)
         val columns = listOf('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
         var isColumnRepeated = false
         var isRowRepeated = false
@@ -76,7 +76,7 @@ class MoveNotation(
             if (slot.column == move.pieceSlot.column) isColumnRepeated = true
         }
         if (isColumnRepeated) notationBuilder.append(move.pieceSlot.row + 1)
-        if (isRowRepeated || (piece?.pieceType == PieceType.PAWN && move.isCapture)) notationBuilder.append(columns[move.pieceSlot.column])
+        if (isRowRepeated || (piece?.type == PieceType.PAWN && move.isCapture)) notationBuilder.append(columns[move.pieceSlot.column])
     }
 
     override fun toString(): String {
