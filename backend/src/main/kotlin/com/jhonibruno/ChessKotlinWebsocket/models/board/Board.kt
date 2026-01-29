@@ -11,7 +11,7 @@ import com.jhonibruno.ChessKotlinWebsocket.models.validators.PawnValidator
 
 class Board {
 
-    private companion object {
+    private companion object InitialPositions {
         const val WHITE_KINGS_ROW = 0
         const val BLACK_KINGS_ROW = 7
 
