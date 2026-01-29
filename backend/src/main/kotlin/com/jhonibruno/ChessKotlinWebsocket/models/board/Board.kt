@@ -166,6 +166,15 @@ class Board {
             }
         }
 
+        // TODO: En Passant
+        //  se a jogada foi um peão que andou duas casas, guardar em uma propriedade (ex: enPassantPawn)
+        //  verifica se a peça movida é um peão a uma distância de (1|-1,0)
+        //  caso a distância em X seja 1 (peão movido está a direita)
+        //    add captura em x-=1, y-+=1 (para frente)
+        //  caso a distância em X seja -1 (peão movido está a esquerda)
+        //    add captura em x+=1, y-+=1 (para frente)
+        //  criar a "captura fantasma", pois o peão capturado não estará no slot de destino
+
         return legalMoves
     }
 
