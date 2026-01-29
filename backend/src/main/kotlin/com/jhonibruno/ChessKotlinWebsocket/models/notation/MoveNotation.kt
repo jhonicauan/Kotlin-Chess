@@ -14,18 +14,25 @@ class MoveNotation(
     private val isCastlingQueen: Boolean,
     private val piecePromotedTo: PieceType?
 ) {
+    private companion object {
+        val COLUMN_NAMES = listOf('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
+    }
+
     val notation: String
+
+    init {
+        notation = generateNotation()
+    }
 
     fun generateNotation(): String {
         val notationBuilder = StringBuilder()
+
         appendCastlingKing(notationBuilder)
         appendCastlingQueen(notationBuilder)
-        if (!isCastlingKing && !isCastlingQueen) {
-            appendPiece(notationBuilder)
-            appendIsCapture(notationBuilder)
-            appendPosition(notationBuilder)
-            appendPromotion(notationBuilder)
-        }
+        appendPiece(notationBuilder)
+        appendIsCapture(notationBuilder)
+        appendPosition(notationBuilder)
+        appendPromotion(notationBuilder)
         appendIsCheck(notationBuilder)
         appendIsCheckmate(notationBuilder)
 
@@ -49,26 +56,30 @@ class MoveNotation(
     }
 
     private fun appendPromotion(notationBuilder: StringBuilder) {
+        if (isCastlingKing || isCastlingQueen) return
         if (piecePromotedTo != null) notationBuilder.append("=${piecePromotedTo.letter}")
     }
 
     private fun appendPosition(notationBuilder: StringBuilder) {
-        val columns = listOf('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
+        if (isCastlingKing || isCastlingQueen) return
+
         move.destinationSlot.let {
             notationBuilder
-                .append(columns[it.column])
+                .append(COLUMN_NAMES[it.column])
                 .append(it.row + 1)
         }
     }
 
     private fun appendIsCapture(notationBuilder: StringBuilder) {
+        if (isCastlingKing || isCastlingQueen) return
         if (move.isCapture) notationBuilder.append('x')
     }
 
     private fun appendPiece(notationBuilder: StringBuilder) {
+        if (isCastlingKing || isCastlingQueen) return
+
         val piece: Piece? = move.pieceSlot.piece
         if (piece?.type != PieceType.PAWN) notationBuilder.append(piece?.type?.letter)
-        val columns = listOf('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
         var isColumnRepeated = false
         var isRowRepeated = false
         for (slot in alternativePieces) {
@@ -76,14 +87,10 @@ class MoveNotation(
             if (slot.column == move.pieceSlot.column) isColumnRepeated = true
         }
         if (isColumnRepeated) notationBuilder.append(move.pieceSlot.row + 1)
-        if (isRowRepeated || (piece?.type == PieceType.PAWN && move.isCapture)) notationBuilder.append(columns[move.pieceSlot.column])
+        if (isRowRepeated || (piece?.type == PieceType.PAWN && move.isCapture)) notationBuilder.append(COLUMN_NAMES[move.pieceSlot.column])
     }
 
     override fun toString(): String {
         return notation
-    }
-
-    init {
-        notation = generateNotation()
     }
 }
