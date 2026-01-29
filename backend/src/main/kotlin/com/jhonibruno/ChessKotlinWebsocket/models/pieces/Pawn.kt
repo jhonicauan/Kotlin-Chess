@@ -1,14 +1,13 @@
 package com.jhonibruno.ChessKotlinWebsocket.models.pieces
 
-import com.jhonibruno.ChessKotlinWebsocket.models.Move
-import com.jhonibruno.ChessKotlinWebsocket.models.board.Slot
 import com.jhonibruno.ChessKotlinWebsocket.models.enums.PieceColor
 import com.jhonibruno.ChessKotlinWebsocket.models.enums.PieceType
 
 class Pawn(color: PieceColor, var isMoved: Boolean = false): Piece(color) {
-    override val moveDirections = listOf<MoveVectorDTO>(
+    override val moveDirections: List<MoveVectorDTO> = listOf(
         MoveVectorDTO(1,0), MoveVectorDTO(2,0),
-        MoveVectorDTO(1,1), MoveVectorDTO(1,-1))
+        MoveVectorDTO(1,1), MoveVectorDTO(1,-1)
+    )
 
     override val type = PieceType.PAWN
 
