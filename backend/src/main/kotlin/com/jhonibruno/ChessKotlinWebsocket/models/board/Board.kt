@@ -162,7 +162,7 @@ class Board {
                 legalMoves.add(Move(pieceSlot, slots[pieceSlot.row][KING_SIDE_KNIGHT_COLUMN], false))
             }
             if (canQueenSideCastling(piece.color)) {
-                legalMoves.add(Move(pieceSlot, slots[pieceSlot.row][QUEEN_SIDE_KNIGHT_COLUMN], false))
+                legalMoves.add(Move(pieceSlot, slots[pieceSlot.row][QUEEN_SIDE_BISHOP_COLUMN], false))
             }
         }
 
@@ -295,7 +295,7 @@ class Board {
         val kingsRow = getKingsRowByColor(color)
 
         val king = kingsRow[KING_COLUMN].piece
-        kingsRow[QUEEN_SIDE_KNIGHT_COLUMN].piece = king
+        kingsRow[QUEEN_SIDE_BISHOP_COLUMN].piece = king
         kingsRow[KING_COLUMN].piece = null
         (king as King).isMoved = true
 
