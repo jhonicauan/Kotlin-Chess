@@ -1,6 +1,7 @@
 package com.jhonibruno.ChessKotlinWebsocket.models
 
 import com.jhonibruno.ChessKotlinWebsocket.models.board.Board
+import com.jhonibruno.ChessKotlinWebsocket.models.board.Slot
 import com.jhonibruno.ChessKotlinWebsocket.models.client.ClientBoardDTO
 import com.jhonibruno.ChessKotlinWebsocket.models.client.GameDTO
 import com.jhonibruno.ChessKotlinWebsocket.models.client.GameStatusDTO
@@ -9,6 +10,7 @@ import com.jhonibruno.ChessKotlinWebsocket.models.enums.PieceColor
 import com.jhonibruno.ChessKotlinWebsocket.models.enums.PieceType
 import com.jhonibruno.ChessKotlinWebsocket.models.history.MoveLogRegistry
 import com.jhonibruno.ChessKotlinWebsocket.models.notation.MoveNotation
+import com.jhonibruno.ChessKotlinWebsocket.models.pieces.Piece
 
 class Game(private val board: Board) {
 
@@ -21,6 +23,7 @@ class Game(private val board: Board) {
         currentPlayerColor = if (currentPlayerColor == PieceColor.WHITE) PieceColor.BLACK else PieceColor.WHITE
     }
 
+    // TODO: deixar mais claro que atribui uma propriedade
     private fun verifyCheck() {
         isCheck = board.isKingInCheck(currentPlayerColor)
     }
@@ -94,6 +97,7 @@ class Game(private val board: Board) {
         val piece = pieceSlot.piece
 
         if (piece == null || piece.color != currentPlayerColor) throw IllegalArgumentException("Só é possível mover peças de sua cor")
+
         val destinationPosition = moveDTO.destiny
         val destinationSlot = board.getSlotByPosition(destinationPosition)
 
@@ -101,40 +105,41 @@ class Game(private val board: Board) {
         val move = Move(pieceSlot, destinationSlot, isCapture)
         val possibleMoves = board.getLegalMoves(pieceSlot)
 
-        if (existsPossibleMove(move, possibleMoves)) {
-            val moveClone = move.clone()
-            if (isMoveKingSideCastling(move)) {
-                board.kingSideCastling(currentPlayerColor)
-                val roundBoard = board.getSlots().flatten().map { it.clone() }
-                changePlayerColor()
-                verifyCheck()
-                val moveNotation = MoveNotation(moveClone, listOf(), isCheck, isCheckmate(), true, false, moveDTO.promotion)
-                moveLog.add(MoveLogRegistry(getRound(),moveNotation,roundBoard))
-                updateStatus()
-                return
-            }
-            if (isMoveQueenSideCastling(move)) {
-                board.queenSideCastling(currentPlayerColor)
-                val roundBoard = board.getSlots().flatten().map { it.clone() }
-                changePlayerColor()
-                verifyCheck()
-                val moveNotation = MoveNotation(moveClone, listOf(), isCheck, isCheckmate(), false, true, moveDTO.promotion)
-                moveLog.add(MoveLogRegistry(getRound(),moveNotation,roundBoard))
-                updateStatus()
-                return
-            }
-            val alternativePiece = board.getAlternativePiece(move)
-            if (!board.canPromote(destinationSlot,piece) && moveDTO.promotion != null) throw IllegalArgumentException("Não é possivel promover")
-            if (board.canPromote(destinationSlot,piece) && moveDTO.promotion == null) throw IllegalArgumentException("Não se pode mover um peão para ultima casa sem especificar a promoção")
-            board.movePiece(move)
-            val roundBoard = board.getSlots().flatten().map { it.clone() }
-            if (board.canPromote(destinationSlot,piece) && moveDTO.promotion != null) board.promotePawn(destinationSlot,moveDTO.promotion)
-            changePlayerColor()
-            verifyCheck()
+        if (!existsPossibleMove(move, possibleMoves)) return
 
-            val moveNotation = MoveNotation(moveClone, alternativePiece, isCheck, isCheckmate(), false, false, moveDTO.promotion)
-            moveLog.add(MoveLogRegistry(getRound(),moveNotation,roundBoard))
-            updateStatus()
+        val moveSlotsOriginalState = move.clone()
+
+        var alternativePieces: List<Slot> = listOf()
+
+        val isCastlingKing = isMoveKingSideCastling(move)
+        val isCastlingQueen = isMoveQueenSideCastling(move)
+
+        if (isCastlingKing) {
+            board.kingSideCastling(currentPlayerColor)
+        } else if (isCastlingQueen) {
+            board.queenSideCastling(currentPlayerColor)
+        } else {
+            alternativePieces = board.getAlternativePiece(move) // TODO: MELHORAR NOME DO MÉTODO - peças alternativas = outras peças do mesmo tipo que podem competir pela notação
+
+            checkValidPromotionMove(destinationSlot, piece, moveDTO)
+            board.movePiece(move)
+        }
+
+        val boardCurrentState = board.getCurrentState().flatten()
+        if (board.canPromote(destinationSlot, piece) && moveDTO.promotion != null) board.promotePawn(destinationSlot,moveDTO.promotion)
+        changePlayerColor()
+        verifyCheck()
+
+        val moveNotation = MoveNotation(moveSlotsOriginalState, alternativePieces, isCheck, isCheckmate(), isCastlingKing, isCastlingQueen, moveDTO.promotion)
+        moveLog.add(MoveLogRegistry(getRound(), moveNotation, boardCurrentState))
+        updateStatus()
+    }
+
+    private fun checkValidPromotionMove(destinationSlot: Slot, piece: Piece, moveDTO: ClientMoveDTO) {
+        if (!board.canPromote(destinationSlot, piece)) {
+            if (moveDTO.promotion != null) throw IllegalArgumentException("Não é possível promover")
+        } else {
+            if (moveDTO.promotion == null) throw IllegalArgumentException("Não se pode mover um peão para ultima casa sem especificar a promoção")
         }
     }
 

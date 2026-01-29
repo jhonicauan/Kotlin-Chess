@@ -76,6 +76,10 @@ class Board {
         return slots
     }
 
+    fun getCurrentState(): List<List<Slot>> {
+        return slots.map { it.map { slot -> slot.clone() } }
+    }
+
     private fun getKingSlot(color: PieceColor): Slot {
         return slots.flatten().first { it.piece?.color == color && it.piece?.type == PieceType.KING }
     }
@@ -148,7 +152,10 @@ class Board {
     }
 
     fun getLegalMoves(pieceSlot: Slot): List<Move> {
-        val legalMoves = getPossibleMoves(pieceSlot).filter { isMoveLegal(it) }.toMutableList()
+        val legalMoves = getPossibleMoves(pieceSlot)
+            .filter { isMoveLegal(it) }
+            .toMutableList()
+
         val piece = pieceSlot.piece
         if (piece?.type == PieceType.KING) {
             if (canKingSideCastling(piece.color)) {
