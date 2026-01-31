@@ -101,7 +101,7 @@ class Board {
         slots[pieceSlot.row][pieceSlot.column].piece = null
     }
 
-     fun canPromote(destination: Slot,piece: Piece): Boolean {
+    fun canPromote(destination: Slot,piece: Piece): Boolean {
         val promotionRow = if(piece.color == PieceColor.WHITE) BLACK_KINGS_ROW else WHITE_KINGS_ROW
         return piece.type == PieceType.PAWN && promotionRow == destination.row
     }
