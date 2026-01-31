@@ -23,7 +23,6 @@ class GameWebsocketController {
     @MessageMapping("/create")
     fun createGame(gameName: String) {
         if (games.containsKey(gameName)) return
-        println("Vamos criar")
         games[gameName] = Game(Board())
     }
 
