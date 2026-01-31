@@ -94,11 +94,8 @@ class Board {
         slots[destinationSlot.row][destinationSlot.column].piece = slots[pieceSlot.row][pieceSlot.column].piece
         val piece = slots[destinationSlot.row][destinationSlot.column].piece ?: return
 
-        when (piece.type) {
-            PieceType.PAWN -> (piece as Pawn).isMoved = true
-            PieceType.KING -> (piece as King).isMoved = true
-            PieceType.ROOK -> (piece as Rook).isMoved = true
-            else -> {}
+        if (piece is HasMoved && !piece.isMoved) {
+            piece.isMoved = true
         }
 
         slots[pieceSlot.row][pieceSlot.column].piece = null

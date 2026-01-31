@@ -1,11 +1,9 @@
 package com.jhonibruno.ChessKotlinWebsocket.models.pieces
 
-import com.jhonibruno.ChessKotlinWebsocket.models.Move
-import com.jhonibruno.ChessKotlinWebsocket.models.board.Slot
 import com.jhonibruno.ChessKotlinWebsocket.models.enums.PieceColor
 import com.jhonibruno.ChessKotlinWebsocket.models.enums.PieceType
 
-class King(color: PieceColor, var isMoved: Boolean = false): Piece(color) {
+class King(color: PieceColor, override var isMoved: Boolean = false): Piece(color), HasMoved {
     override val moveDirections = listOf<MoveVectorDTO>(
         MoveVectorDTO(1,0), MoveVectorDTO(-1,0),
         MoveVectorDTO(0,1), MoveVectorDTO(0,-1),
