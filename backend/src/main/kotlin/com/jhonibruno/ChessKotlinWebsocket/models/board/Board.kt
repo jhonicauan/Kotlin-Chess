@@ -100,6 +100,11 @@ class Board {
             piece.isMoved = true
         }
 
+        enPassantTargetSlot = null
+        if (piece.type == PieceType.PAWN && abs(destinationSlot.row - pieceSlot.row) == 2) {
+            enPassantTargetSlot = destinationSlot
+        }
+
         slots[pieceSlot.row][pieceSlot.column].piece = null
     }
 
@@ -164,23 +169,18 @@ class Board {
             .toMutableList()
 
         val piece = pieceSlot.piece
-        if (piece?.type == PieceType.KING) {
-            if (canKingSideCastling(piece.color)) {
-                legalMoves.add(Move(pieceSlot, slots[pieceSlot.row][KING_SIDE_KNIGHT_COLUMN], false))
-            }
-            if (canQueenSideCastling(piece.color)) {
-                legalMoves.add(Move(pieceSlot, slots[pieceSlot.row][QUEEN_SIDE_BISHOP_COLUMN], false))
+        if (piece != null) {
+            if (piece.type == PieceType.KING) {
+                if (canKingSideCastling(piece.color)) {
+                    legalMoves.add(Move(pieceSlot, slots[pieceSlot.row][KING_SIDE_KNIGHT_COLUMN], false))
+                }
+                if (canQueenSideCastling(piece.color)) {
+                    legalMoves.add(Move(pieceSlot, slots[pieceSlot.row][QUEEN_SIDE_BISHOP_COLUMN], false))
+                }
+            } else if (canEnPassant(pieceSlot)) {
+                legalMoves.add(getEnPassantMove(pieceSlot))
             }
         }
-
-        // TODO: En Passant
-        //  se a jogada foi um peão que andou duas casas, guardar em uma propriedade (ex: enPassantPawn)
-        //  verifica se a peça movida é um peão a uma distância de (1|-1,0)
-        //  caso a distância em X seja 1 (peão movido está a direita)
-        //    add captura em x-=1, y-+=1 (para frente)
-        //  caso a distância em X seja -1 (peão movido está a esquerda)
-        //    add captura em x+=1, y-+=1 (para frente)
-        //  criar a "captura fantasma", pois o peão capturado não estará no slot de destino
 
         return legalMoves
     }
@@ -213,6 +213,7 @@ class Board {
         val pieceSlot = move.pieceSlot
         val destinationSlot = move.destinationSlot
         val isCapture = move.isCapture
+
         return slots.flatten()
             .filter {
                 it != pieceSlot
@@ -301,6 +302,35 @@ class Board {
         kingsRow[QUEEN_COLUMN].piece = rook
         kingsRow[QUEEN_SIDE_ROOK_COLUMN].piece = null
         (rook as Rook).isMoved = true
+    }
+
+    fun canEnPassant(slot: Slot): Boolean {
+        val piece = slot.piece ?: return false
+        if (piece.type != PieceType.PAWN) return false
+        val currentEnPassantTargetSlot = enPassantTargetSlot ?: return false
+
+        return abs(slot.column - currentEnPassantTargetSlot.column) == 1 && (slot.row == currentEnPassantTargetSlot.row)
+    }
+
+    fun getEnPassantMove(slot: Slot): Move {
+        val currentEnPassantTargetSlot = enPassantTargetSlot ?: throw IllegalStateException("EnPassant não está disponível")
+        val piece = slot.piece ?: throw IllegalStateException("EnPassant não está disponível")
+
+        val moveDirectionY = if (piece.color == PieceColor.WHITE) 1 else -1
+        val moveDirectionX = - (slot.column - currentEnPassantTargetSlot.column)
+        val destinationColumn = slot.column + moveDirectionX
+        val destinationRow = slot.row + moveDirectionY
+
+        val destinationSlot = slots[destinationRow][destinationColumn]
+        return Move(slot, destinationSlot, true)
+    }
+
+    fun enPassant(slot: Slot) {
+        val move = getEnPassantMove(slot)
+        enPassantTargetSlot?.piece = null
+
+        move.destinationSlot.piece = slot.piece
+        slot.piece = null
     }
 
     init {

@@ -101,7 +101,8 @@ class Game(private val board: Board) {
         val destinationPosition = moveDTO.destiny
         val destinationSlot = board.getSlotByPosition(destinationPosition)
 
-        val isCapture = destinationSlot.piece != null
+        val isEnPassant = isEnPassant(pieceSlot, destinationSlot)
+        val isCapture = destinationSlot.piece != null || isEnPassant
         val move = Move(pieceSlot, destinationSlot, isCapture)
         val possibleMoves = board.getLegalMoves(pieceSlot)
 
@@ -121,8 +122,12 @@ class Game(private val board: Board) {
         } else {
             alternativePieces = board.getAlternativePiece(move) // TODO: MELHORAR NOME DO MÉTODO - peças alternativas = outras peças do mesmo tipo que podem competir pela notação
 
-            checkValidPromotionMove(destinationSlot, piece, moveDTO)
-            board.movePiece(move)
+            if (isEnPassant) {
+                board.enPassant(pieceSlot)
+            } else {
+                checkValidPromotionMove(destinationSlot, piece, moveDTO)
+                board.movePiece(move)
+            }
         }
 
         val boardCurrentState = board.getCurrentState().flatten()
@@ -141,5 +146,9 @@ class Game(private val board: Board) {
         } else {
             if (moveDTO.promotion == null) throw IllegalArgumentException("Não se pode mover um peão para ultima casa sem especificar a promoção")
         }
+    }
+
+    private fun isEnPassant(pieceSlot: Slot, destinationSlot: Slot): Boolean {
+        return board.canEnPassant(pieceSlot) && pieceSlot.column - destinationSlot.column != 0
     }
 }
