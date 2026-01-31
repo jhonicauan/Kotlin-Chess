@@ -202,15 +202,6 @@ class Board {
         return !verifySlotIsSafe(color, kingSlot)
     }
 
-    fun showBoard() {
-        for (i in 7 downTo 0) {
-            for (j in 0..7) {
-                print(slots[i][j].piece ?: '.')
-            }
-            println("")
-        }
-    }
-
     fun getAlternativePiece(move: Move): List<Slot> {
         val pieceSlot = move.pieceSlot
         val destinationSlot = move.destinationSlot

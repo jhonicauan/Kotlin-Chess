@@ -142,8 +142,4 @@ class Game(private val board: Board) {
             if (moveDTO.promotion == null) throw IllegalArgumentException("Não se pode mover um peão para ultima casa sem especificar a promoção")
         }
     }
-
-    init {
-        board.showBoard()
-    }
 }
