@@ -8,6 +8,7 @@ import com.jhonibruno.ChessKotlinWebsocket.models.validators.GenericValidator
 import com.jhonibruno.ChessKotlinWebsocket.models.validators.KingValidator
 import com.jhonibruno.ChessKotlinWebsocket.models.validators.KnightValidator
 import com.jhonibruno.ChessKotlinWebsocket.models.validators.PawnValidator
+import kotlin.math.abs
 
 class Board {
 
@@ -27,6 +28,7 @@ class Board {
 
     private val slots: MutableList<MutableList<Slot>> = mutableListOf()
     private val columns: List<Char> = listOf('a','b','c','d','e','f','g','h')
+    private var enPassantTargetSlot: Slot? = null
 
     private fun generateBoard() {
         if (!slots.isEmpty()) return
@@ -101,6 +103,14 @@ class Board {
         slots[pieceSlot.row][pieceSlot.column].piece = null
     }
 
+    fun simulateMove(move: Move) {
+        val pieceSlot = move.pieceSlot
+        val destinationSlot = move.destinationSlot
+        slots[destinationSlot.row][destinationSlot.column].piece = slots[pieceSlot.row][pieceSlot.column].piece
+
+        slots[pieceSlot.row][pieceSlot.column].piece = null
+    }
+
     fun canPromote(destination: Slot,piece: Piece): Boolean {
         val promotionRow = if(piece.color == PieceColor.WHITE) BLACK_KINGS_ROW else WHITE_KINGS_ROW
         return piece.type == PieceType.PAWN && promotionRow == destination.row
@@ -130,7 +140,7 @@ class Board {
         val piece = move.pieceSlot.piece ?: return false
         val actualColor = piece.color
         val backupMove = move.clone()
-        movePiece(move)
+        simulateMove(move)
         val valid = !isKingInCheck(actualColor)
         reverseMove(backupMove)
         return valid
